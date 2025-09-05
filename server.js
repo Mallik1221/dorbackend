@@ -1,4 +1,7 @@
 // server.js
+import dotenv from "dotenv";
+dotenv.config(); 
+
 import http from 'http';
 import { Server } from 'socket.io';
 import app from './src/app.js';
@@ -13,7 +16,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: '*', // Replace with your frontend origin in production
-    methods: ['GET', 'POST']
+    methods: ['GET','POST','PUT','PATCH']
   }
 });
 

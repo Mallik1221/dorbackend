@@ -2,7 +2,6 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
 const JWT_EXPIRES_IN = '7d';
 
 export const login = async (req, res) => {
@@ -26,7 +25,9 @@ export const login = async (req, res) => {
     }
 
     // console.log('Generating token...');
-    const token = jwt.sign({ sub: user._id, role: user.role, phoneNumber: user.phoneNumber }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    // console.log('Login: Using JWT Secret:', process.env.JWT_SECRET);
+
+    const token = jwt.sign({ sub: user._id, role: user.role, phoneNumber: user.phoneNumber }, process.env.JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
     
     // console.log('Login successful');
     res.json({ 
@@ -45,23 +46,6 @@ export const login = async (req, res) => {
   }
 };
 
-export const getMe = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.sub).populate('assignedPurifiers');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    res.json({
-      id: user._id,
-      name: user.name,
-      phoneNumber: user.phoneNumber,
-      role: user.role,
-      assignedPurifiers: user.assignedPurifiers
-    });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to get user data', error: err.message });
-  }
-};
 
 export const register = async (req, res) => {
   try {
@@ -92,7 +76,7 @@ export const register = async (req, res) => {
       sub: user._id, 
       role: user.role, 
       phoneNumber: user.phoneNumber 
-    }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    }, process.env.JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
     
     // console.log('Registration successful');
     res.status(201).json({ 
