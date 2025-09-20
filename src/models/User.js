@@ -1,13 +1,25 @@
 import mongoose from 'mongoose';
 
-const UserSchema = new mongoose.Schema({
-  name: { type: String, required: true, trim: true },
+// Base schema for all users
+const options = { discriminatorKey: 'role', timestamps: true };
+
+const BaseUserSchema = new mongoose.Schema({
   phoneNumber: { type: String, required: true, unique: true, match: /^\d{10}$/ },
-  passwordHash: { type: String, required: true },
-  role: { type: String, enum: ['admin', 'user'], default: 'user' },
-  assignedPurifiers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Purifier' }]
-}, { timestamps: true });
+  passwordHash: { type: String, required: true }
+}, options);
 
-export default mongoose.model('User', UserSchema);
+// Base model
+export const User = mongoose.model('User', BaseUserSchema);
 
+// Regular User schema (inherits BaseUserSchema)
+export const RegularUser = User.discriminator('user', new mongoose.Schema({
+  name: { type: String, trim: true },
+  assignedPurifiers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Purifier' }],
+  connectionRequestStatus: { type: String, enum: ['none','pending','accepted','rejected'], default: 'none' }
+}));
 
+// Admin schema (inherits BaseUserSchema)
+export const AdminUser = User.discriminator('admin', new mongoose.Schema({
+  // Admin-specific fields can go here (if needed)
+  // If no extra fields, just leave empty
+}));

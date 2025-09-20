@@ -1,94 +1,94 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import { User, RegularUser, AdminUser } from '../models/User.js';
 
 const JWT_EXPIRES_IN = '7d';
 
+// ------------------- LOGIN -------------------
 export const login = async (req, res) => {
   try {
-    // console.log('Login attempt:', req.body);
     const { phoneNumber, password } = req.body;
+
     if (!phoneNumber || !password) {
       return res.status(400).json({ message: 'Phone number and password are required' });
     }
 
-    // console.log('Finding user...');
-    const user = await User.findOne({ phoneNumber }).populate('assignedPurifiers');
+    // Find the user in the base User collection
+    const user = await User.findOne({ phoneNumber });
+
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // console.log('Validating password...');
     const isValid = await bcrypt.compare(password, user.passwordHash);
     if (!isValid) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // console.log('Generating token...');
-    // console.log('Login: Using JWT Secret:', process.env.JWT_SECRET);
+    const token = jwt.sign(
+      { sub: user._id, role: user.role, phoneNumber: user.phoneNumber },
+      process.env.JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
 
-    const token = jwt.sign({ sub: user._id, role: user.role, phoneNumber: user.phoneNumber }, process.env.JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-    
-    // console.log('Login successful');
-    res.json({ 
-      token, 
-      user: { 
-        id: user._id, 
-        name: user.name, 
-        phoneNumber: user.phoneNumber, 
-        role: user.role,
-        assignedPurifiers: user.assignedPurifiers || []
-      } 
+    // Minimal response: phoneNumber and role
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        phoneNumber: user.phoneNumber,
+        role: user.role
+      }
     });
+
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ message: 'Login failed', error: err.message });
   }
 };
 
-
+// ------------------- REGISTER -------------------
 export const register = async (req, res) => {
   try {
-    // console.log('Registration attempt:', req.body);
-    const { name, phoneNumber, password, role } = req.body;
-    
-    if (!name || !phoneNumber || !password) {
-      return res.status(400).json({ message: 'Name, phone number and password are required' });
+    const { phoneNumber, password, role } = req.body;
+
+    if (!phoneNumber || !password || !role) {
+      return res.status(400).json({ message: 'Phone number, password, and role are required' });
     }
-    
-    // console.log('Checking if user exists...');
+
+    if (!['admin', 'user'].includes(role)) {
+      return res.status(400).json({ message: 'Invalid role' });
+    }
+
     const exists = await User.findOne({ phoneNumber });
-    if (exists) return res.status(409).json({ message: 'Phone number already registered' });
-    
-    // console.log('Hashing password...');
+    if (exists) {
+      return res.status(409).json({ message: 'Phone number already registered' });
+    }
+
     const passwordHash = await bcrypt.hash(password, 10);
-    
-    // console.log('Creating user...');
-    const user = await User.create({ 
-      name, 
-      phoneNumber, 
-      passwordHash, 
-      role: role && ['admin','user'].includes(role) ? role : 'user' 
+
+    let newUser;
+    if (role === 'user') {
+      newUser = await RegularUser.create({ phoneNumber, passwordHash });
+    } else if (role === 'admin') {
+      newUser = await AdminUser.create({ phoneNumber, passwordHash });
+    }
+
+    const token = jwt.sign(
+      { sub: newUser._id, role: newUser.role, phoneNumber: newUser.phoneNumber },
+      process.env.JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
+    res.status(201).json({
+      token,
+      user: {
+        id: newUser._id,
+        phoneNumber: newUser.phoneNumber,
+        role: newUser.role
+      }
     });
-    
-    // console.log('User created, generating token...');
-    const token = jwt.sign({ 
-      sub: user._id, 
-      role: user.role, 
-      phoneNumber: user.phoneNumber 
-    }, process.env.JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-    
-    // console.log('Registration successful');
-    res.status(201).json({ 
-      token, 
-      user: { 
-        id: user._id, 
-        name: user.name, 
-        phoneNumber: user.phoneNumber, 
-        role: user.role,
-        assignedPurifiers: user.assignedPurifiers || []
-      } 
-    });
+
   } catch (err) {
     console.error('Registration error:', err);
     res.status(500).json({ message: 'Registration failed', error: err.message });

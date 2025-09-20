@@ -10,8 +10,6 @@ import { authenticate, authorize } from './middlewares/auth.js';
 import { removeHeaders, errorHandler } from './middlewares/header_ErrorHandler.js';
 import { connectDB } from './config/db.js';
 
-import userRoutes from './routes/userRoutes.js';
-
 const app = express();
 
 // Connect to MongoDB
@@ -38,10 +36,10 @@ app.use('/api/auth', authRoutes);
 
 // Protect admin/application APIs
 app.use('/api/purifiers', authenticate, authorize(['admin']), purifierRoutes);
+
+// Developer/ IOT APIs
 app.use('/api/dev/purifiers', developerPurifierRoutes);
 
-// User page APIs
-app.use('/api/user', userRoutes);
 
 // Test route
 app.get('/', (req, res) => res.send('Ping successful. DOR-Server responded'));

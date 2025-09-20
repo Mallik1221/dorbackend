@@ -18,7 +18,7 @@ const router = express.Router();
 router.get('/:id/status', (req, res, next) => {
   const { onlineStatus } = req.query;
   // If query param onlineStatus=1 → call activate controller, else call normal status
-  if (onlineStatus === '1') {
+  if (onlineStatus === '1' || onlineStatus === '0') {
     return getSwitchStatusAndActivate(req, res, next);
   }
   return getSwitchStatus(req, res, next);

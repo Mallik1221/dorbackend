@@ -19,7 +19,23 @@ export const getIo = () => {
   return io;
 };
 
-export const emitPurifierUpdate = (purifier) => {
+// Purifier events
+export const emitPurifierCreated = (purifier) => {
   const socketIo = getIo();
-  socketIo.emit("purifierUpdate", purifier);
+  socketIo.emit("purifier:created", purifier);
+};
+
+export const emitPurifierUpdated = (purifier) => {
+  const socketIo = getIo();
+  socketIo.emit("purifier:updated", purifier);
+};
+
+export const emitPurifierDeleted = (purifierId) => {
+  const socketIo = getIo();
+  socketIo.emit("purifier:deleted", { id: purifierId });
+};
+
+export const emitPurifierToggled = (purifier) => {
+  const socketIo = getIo();
+  socketIo.emit("purifier:toggled", purifier);
 };

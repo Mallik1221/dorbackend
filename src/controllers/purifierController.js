@@ -1,8 +1,13 @@
 
 import Purifier from '../models/Purifier.js';
-import { emitPurifierUpdate } from '../sockets/index.js';
+import {
+  emitPurifierCreated,
+  emitPurifierUpdated,
+  emitPurifierDeleted,
+  emitPurifierToggled
+} from '../sockets/index.js';
 
-// Get all purifiers
+// Get all purifiers (no sockets needed)
 export const getAllPurifiers = async (req, res) => {
   try {
     const purifiers = await Purifier.find();
@@ -20,7 +25,7 @@ export const createPurifier = async (req, res) => {
     const savedPurifier = await newPurifier.save();
 
     // Emit update after a new purifier is created
-    emitPurifierUpdate(savedPurifier);
+    emitPurifierCreated(savedPurifier); // Emit only for creation
     
     res.status(201).json(savedPurifier);
   } catch (error) {
@@ -42,7 +47,7 @@ export const updatePurifier = async (req, res) => {
     }
 
     // Notify clients in real-time
-    emitPurifierUpdate(updatedPurifier);
+    emitPurifierUpdated(updatedPurifier);
 
 
     res.json(updatedPurifier);
@@ -55,9 +60,9 @@ export const updatePurifier = async (req, res) => {
 export const deletePurifier = async (req, res) => {
   try {
     const deletedPurifier = await Purifier.findOneAndDelete({ id: req.params.id });
-    if (!deletedPurifier) {
-      return res.status(404).json({ message: 'Purifier not found' });
-    }
+    if (!deletedPurifier) return res.status(404).json({ message: 'Purifier not found' });
+
+    emitPurifierDeleted(req.params.id); // Emit deletion
     res.json({ message: 'Purifier deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -78,7 +83,7 @@ export const togglePurifierStatus = async (req, res) => {
     const updatedPurifier = await purifier.save();
 
      // Notify clients in real-time
-    emitPurifierUpdate(updatedPurifier);
+    emitPurifierToggled(updatedPurifier);
 
     res.json(updatedPurifier);
   } catch (error) {

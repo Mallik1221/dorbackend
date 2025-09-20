@@ -5,7 +5,7 @@ import {
   createPurifier,
   updatePurifier,
   deletePurifier,
-  togglePurifierStatus
+  togglePurifierStatus,
 } from '../controllers/purifierController.js';
 
 const router = express.Router();

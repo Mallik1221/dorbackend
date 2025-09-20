@@ -1,7 +1,7 @@
 
 import Purifier from '../models/Purifier.js';
 import activeTimers from '../utils/activeTimers.js';
-import { emitPurifierUpdate } from '../sockets/index.js';
+import { emitPurifierUpdated, emitPurifierToggled } from '../sockets/index.js';
 
 /**
  * API1 - GET /api/purifiers/:id/status
@@ -17,7 +17,7 @@ export const getSwitchStatus = async (req, res) => {
     }
 
     // Emit real-time update to dashboard
-    emitPurifierUpdate(purifier);
+    emitPurifierUpdated(purifier);
 
     res.json({
       id: purifier.id,
@@ -61,24 +61,35 @@ export const getSwitchStatusAndActivate = async (req, res) => {
           await purifier.save();
 
           // Emit update after timer ends
-          emitPurifierUpdate(purifier);
+          emitPurifierUpdated(purifier);
         }
         activeTimers.delete(id);
       }, 60000); // 60 seconds
 
       activeTimers.set(id, timer);
-      await purifier.save();
+
+    } else {
+      // onlineStatus != 1 → force deviceStatus to 0
+      purifier.status = false;
+
+      // Clear any running timer
+      if (activeTimers.has(id)) {
+        clearTimeout(activeTimers.get(id));
+        activeTimers.delete(id);
+      }
     }
 
+    await purifier.save();
     // Emit update immediately after activation
-    emitPurifierUpdate(purifier);
+    emitPurifierUpdated(purifier);
 
     res.json({
       id: purifier.id,
       switchStatus: purifier.onlineStatus ? 1 : 0,
+      deviceStatus: purifier.status ? 1 : 0,
       message: onlineStatus === '1'
         ? 'Switch status returned and purifier activated'
-        : 'Switch status returned'
+        : 'Switch status returned and purifier deactivated'
     });
   } catch (error) {
     console.error('Error in getSwitchStatusAndActivate:', error);
@@ -108,8 +119,8 @@ export const updateSwitchStatus = async (req, res) => {
 
     await purifier.save();
 
-     // Emit update to dashboard
-    emitPurifierUpdate(purifier);
+    // Emit update to dashboard
+    emitPurifierToggled(purifier);
 
     res.json({
       id: purifier.id,

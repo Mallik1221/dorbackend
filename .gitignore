@@ -15,3 +15,15 @@ logs
 
 # Build files
 dist
+
+src/controllers/adminController.js
+src/controllers/userController.js
+
+src/models/Complaint.js
+src/models/Recharge.js
+
+src/routes/adminRoutes.js
+src/routes/userRoutes.js
+
+
+
