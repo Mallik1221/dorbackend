@@ -24,14 +24,17 @@ purifier-management-backend/
  ┃ ┣ 📂config
  ┃ ┃ ┗ db.js                # MongoDB connection
  ┃ ┣ 📂controllers
- ┃ ┃ ┣ purifierController.js         # Admin-facing logic
- ┃ ┃ ┗ developerPurifierController.js # IoT/Developer APIs
+ ┃ ┃ ┣ authController.js                # Auth logic
+ ┃ ┃ ┣ purifierController.js            # Admin-facing logic
+ ┃ ┃ ┗ developerPurifierController.js   # IoT/Developer APIs
  ┃ ┣ 📂middleware
- ┃ ┃ ┣ errorHandler.js      # Central error handler
- ┃ ┃ ┗ headerMiddleware.js  # Remove unwanted headers
+ ┃ ┃ ┣ auth.js                     # Authenticate & Authorize logic
+ ┃ ┃ ┣ header_ErrorHandler.js      # Central error handler & Remove unwanted headers
  ┃ ┣ 📂models
+ ┃ ┃ ┗ User.js          # User schema/model
  ┃ ┃ ┗ Purifier.js          # Purifier schema/model
  ┃ ┣ 📂routes
+ ┃ ┃ ┣ authRoutes.js                # Auth routes
  ┃ ┃ ┣ purifierRoutes.js            # Admin-facing routes
  ┃ ┃ ┗ developerPurifierRoutes.js   # IoT/Developer routes
  ┃ ┗ app.js                 # Express app setup
@@ -58,16 +61,17 @@ purifier-management-backend/
 
 ### 🔹 Admin / Application APIs (`/api/purifiers`)
 
-* `POST /api/purifiers` → Add a new purifier
 * `GET /api/purifiers` → Get all purifiers
-* `GET /api/purifiers/:id` → Get purifier by ID
+* `POST /api/purifiers` → Add a new purifier
 * `PUT /api/purifiers/:id` → Update purifier details
 * `DELETE /api/purifiers/:id` → Delete purifier
+* `PATCH api/purifiers/:id/toggle-status` → Toggle Switch status by id
 
 ### 🔹 Developer / IoT APIs (`/api/dev/purifiers`)
 
-* `POST /api/dev/purifiers/:id/status` → Update purifier status (ON/OFF)
-* `GET /api/dev/purifiers/:id/status` → Get purifier current status
+* `GET /api/dev/purifiers/:id/status` → Get purifier current Switch status
+* `GET /api/dev/purifiers/456/status?onlineStatus=0` → Switch status returned and purifier activated[1]/deactivated[0]
+* `PUT /api/dev/purifiers?id=456&status=1` → Update switch status
 
 ---
 
