@@ -48,6 +48,7 @@ export const getSwitchStatusAndActivate = async (req, res) => {
     // If onlineStatus=1, activate device temporarily
     if (onlineStatus === '1') {
       purifier.status = true; // turn ON device
+      purifier.lastOnline = null; // reset lastOnline while online
 
       // Clear existing timer if exists
       if (activeTimers.has(id)) {
@@ -70,8 +71,10 @@ export const getSwitchStatusAndActivate = async (req, res) => {
 
     } else {
       // onlineStatus != 1 → force deviceStatus to 0
-      purifier.status = false;
-
+      if (purifier.status) {
+        purifier.status = false;
+        purifier.lastOnline = new Date(); // only set if device was ON
+      }
       // Clear any running timer
       if (activeTimers.has(id)) {
         clearTimeout(activeTimers.get(id));
