@@ -14,8 +14,13 @@ export const User = mongoose.model('User', BaseUserSchema);
 // Regular User schema (inherits BaseUserSchema)
 export const RegularUser = User.discriminator('user', new mongoose.Schema({
   name: { type: String, trim: true },
+  location: {
+    houseNoStreet: { type: String, trim: true },
+    area: { type: String, trim: true },
+    pincode: { type: String, match: /^\d{6}$/ },
+  },
   assignedPurifiers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Purifier' }],
-  connectionRequestStatus: { type: String, enum: ['none','pending','accepted','rejected'], default: 'none' }
+  connectionRequestStatus: { type: String, enum: ['none', 'pending', 'accepted', 'rejected'], default: 'none' }
 }));
 
 // Admin schema (inherits BaseUserSchema)

@@ -6,6 +6,19 @@ export const initSocket = (serverInstance) => {
 
   io.on("connection", (socket) => {
     console.log(`Socket connected: ${socket.id}`);
+
+    // User joins their personal room
+    socket.on('join:user', (userId) => {
+      socket.join(userId);
+      console.log(`User ${userId} joined room`);
+    });
+
+    // Admin can join a global admin room (optional)
+    socket.on('join:admin', () => {
+      socket.join('admins');
+      console.log(`Admin joined room`);
+    });
+
     socket.on("disconnect", () => {
       console.log(`Socket disconnected: ${socket.id}`);
     });
